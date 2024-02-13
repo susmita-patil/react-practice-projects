@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   NavBar,
   Logo,
@@ -11,6 +11,7 @@ import { Box } from "./Components/Main/Box";
 import {
   WatchedSummary,
   WatchedMoviesList,
+  MovieDetails,
 } from "./Components/Main/WatchedListBox";
 import { StarRating } from "./Components/StarRating";
 
@@ -61,29 +62,114 @@ export const tempWatchedData = [
   },
 ];
 
-export default function App() {
-  const [movies, setMovies] = useState(tempMovieData);
-  const [watched, setWatched] = useState(tempWatchedData);
+const KEY = "c04fc617";
+const tempQuery = "inception";
 
+export default function App() {
+  const [movies, setMovies] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+  // const [watched, setWatched] = useState([]);
+  const [watched, setWatched] = useState(() => {
+    const storedValue = localStorage.getItem("watched");
+    return JSON.parse(storedValue);
+  });
+
+  const handleSelectedMovie = (id) => {
+    setSelectedId((selectedId) => (id === selectedId ? null : id));
+  };
+  const handleCloseMovie = () => {
+    setSelectedId(null);
+  };
+  const handleAddWatched = (movie) => {
+    setWatched((watched) => [...watched, movie]);
+    // localStorage.setItem("watched", JSON.stringify([...watched, movie]));
+  };
+
+  const handleDeleteWatched = (id) => {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
+  };
+
+  useEffect(() => {
+    localStorage.setItem("watched", JSON.stringify(watched));
+  }, [watched]);
+
+  // http://www.omdbapi.com/?i=tt3896198&apikey=${KEY}&s=${query}
+  useEffect(() => {
+    const controller = new AbortController();
+    async function fetchMovies() {
+      try {
+        setIsLoading(true);
+        setError("");
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) throw new Error("Something went wrong with fetching data");
+
+        const data = await res.json();
+        if (data.Response === "False") throw new Error("Movies not found");
+
+        setMovies(data.Search);
+        setError("");
+      } catch (err) {
+        if (err.name !== "AbortError") setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    if (!query.length) {
+      setError("");
+      setMovies([]);
+      return;
+    }
+    handleCloseMovie();
+    fetchMovies();
+    return () => {
+      controller.abort();
+    };
+  }, [query]);
   return (
     <>
       <NavBar>
         <Logo />
-        <SearchBar />
+        <SearchBar query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
       <Main>
         <Box>
-          <MovieList movies={movies} />
+          {isLoading && <Loader />}
+          {!isLoading && !error && (
+            <MovieList
+              movies={movies}
+              handleSelectedMovie={handleSelectedMovie}
+            />
+          )}
+          {error && <ErrorComponent message={error} />}
         </Box>
         <Box>
-          <WatchedSummary watched={watched} />
-          <WatchedMoviesList watched={watched} />
+          {selectedId ? (
+            <MovieDetails
+              selectedId={selectedId}
+              handleCloseMovie={handleCloseMovie}
+              handleAddWatched={handleAddWatched}
+              watched={watched}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
+              <WatchedMoviesList
+                watched={watched}
+                handleDeleteWatched={handleDeleteWatched}
+              />
+            </>
+          )}
         </Box>
         {/* <WatchedListBox /> */}
       </Main>
 
-      <StarRating maxRating={10} />
       {/* <StarRating
         maxRating={5}
         messages={["Terrible", "Bad", "Okay", "Good", "Amazing"]}
@@ -91,3 +177,15 @@ export default function App() {
     </>
   );
 }
+
+export const Loader = () => {
+  return <p className="loader">Loading ...</p>;
+};
+export const ErrorComponent = ({ message }) => {
+  return (
+    <p className="error">
+      <span>⛔️</span>
+      {message}
+    </p>
+  );
+};

@@ -13,8 +13,7 @@ export const Logo = () => {
   );
 };
 
-export const SearchBar = () => {
-  const [query, setQuery] = useState("");
+export const SearchBar = ({ query, setQuery }) => {
   return (
     <input
       className="search"
@@ -29,7 +28,7 @@ export const SearchBar = () => {
 export const NumResults = ({ movies }) => {
   return (
     <p className="num-results">
-      Found <strong>{movies.length}</strong> results
+      Found <strong>{movies && movies.length}</strong> results
     </p>
   );
 };
