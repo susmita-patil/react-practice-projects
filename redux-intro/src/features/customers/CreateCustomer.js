@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createCustomer } from "./CustomerActionCreators";
-import store from "../../features/store";
+// import { createCustomer } from "./CustomerActionCreators";
+import { createCustomer } from "./CustomerSliceRTK";
+import store from "../store-RTK";
 function Customer() {
   const [fullName, setFullName] = useState("");
   const [nationalId, setNationalId] = useState("");

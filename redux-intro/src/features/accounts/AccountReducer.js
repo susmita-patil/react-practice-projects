@@ -3,12 +3,14 @@ import {
   ACCOUNT_PAYLOAN,
   ACCOUNT_REQUESTLOAN,
   ACCOUNT_WITHDRAW,
+  ACCOUNT_CONVERTINGCURRENCY,
 } from "../Constants";
 
 const initialStateAccount = {
   balance: 0,
   loan: 0,
   loanPurpose: "",
+  isLoading: false,
 };
 
 export const accountReducer = (state = initialStateAccount, action) => {
@@ -17,6 +19,7 @@ export const accountReducer = (state = initialStateAccount, action) => {
       return {
         ...state,
         balance: state.balance + action.payload,
+        isLoading: false,
       };
     case ACCOUNT_WITHDRAW:
       return {
@@ -37,6 +40,11 @@ export const accountReducer = (state = initialStateAccount, action) => {
         loan: 0,
         loanPurpose: "",
         balance: state.balance - state.loan,
+      };
+    case ACCOUNT_CONVERTINGCURRENCY:
+      return {
+        ...state,
+        isLoading: true,
       };
     default:
       return state;

@@ -1,8 +1,10 @@
-import { createStore, combineReducers } from "redux";
+import { createStore, combineReducers, applyMiddleware } from "redux";
+import { thunk } from "redux-thunk";
+import { composeWithDevTools } from "redux-devtools-extension";
 import { accountReducer } from "./accounts/AccountReducer";
 import { customerReducer } from "./customers/CustomerReducer";
-import { deposit } from "./accounts/AccountActionCreators";
-import { createCustomer, updateName } from "./customers/CustomerActionCreators";
+// import { deposit } from "./accounts/AccountActionCreators";
+// import { createCustomer, updateName } from "./customers/CustomerActionCreators";
 
 //combining reducers
 const rootReducer = combineReducers({
@@ -11,8 +13,11 @@ const rootReducer = combineReducers({
 });
 
 // Create store
-const store = createStore(rootReducer);
-console.log(store.getState());
+const store = createStore(
+  rootReducer,
+  composeWithDevTools(applyMiddleware(thunk))
+);
+// console.log(store.getState());
 // use store
 // store.dispatch({ type: "account/deposit", payload: 500 });
 // console.log(store.getState());
